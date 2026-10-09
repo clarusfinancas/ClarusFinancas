@@ -1,0 +1,12 @@
+'use client'
+import Link from 'next/link'
+import { useState } from 'react'
+import { ArrowRight, Check } from 'lucide-react'
+import { z } from 'zod'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { AuthShell } from '@/components/auth/auth-shell'
+import { requestPasswordReset } from '@/services/auth'
+const schema = z.object({ email: z.string().email('Digite um e-mail válido.') })
+export default function ForgotPasswordPage() { const [email,setEmail]=useState(''); const [error,setError]=useState(''); const [sent,setSent]=useState(false); const [loading,setLoading]=useState(false); async function submit(e:React.FormEvent){e.preventDefault();const result=schema.safeParse({email});if(!result.success){setError(result.error.issues[0].message);return}setLoading(true);setError('');try{const token=await requestPasswordReset(email);setSent(true);if(typeof window!=='undefined') window.history.replaceState(null,'',`/reset-password?token=${token}`)}catch(error){setError(error instanceof Error?error.message:'Não foi possível enviar o link.')}finally{setLoading(false)}}return <AuthShell><p className="text-sm text-muted-foreground">sem drama</p><h2 className="mt-3 font-display text-4xl tracking-[-.04em]">Recupere sua senha</h2><p className="mt-3 text-sm text-muted-foreground">Enviaremos um link para você voltar a entrar.</p>{sent?<div className="mt-10 rounded-2xl border bg-card p-5"><Check className="size-5 text-primary"/><p className="mt-3 font-medium">Link gerado com sucesso.</p><p className="mt-1 text-sm text-muted-foreground">Em uma versão conectada, ele chegaria no seu e-mail. Aqui, o botão abaixo abre a redefinição.</p><Link href="/reset-password" className="mt-5 inline-flex text-sm font-medium text-primary underline">Continuar para redefinir</Link></div>:<form onSubmit={submit} className="mt-10 flex flex-col gap-5"><div className="flex flex-col gap-2"><Label htmlFor="email">E-mail</Label><Input id="email" type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="voce@email.com" autoFocus/></div>{error&&<p role="alert" className="text-sm text-destructive">{error}</p>}<Button type="submit" disabled={loading} className="h-12 w-full">{loading?'Enviando...':'Enviar link'} {!loading&&<ArrowRight data-icon="inline-end"/>}</Button></form>}<p className="mt-8 text-center text-sm text-muted-foreground"><Link href="/login" className="font-medium text-primary hover:underline">Voltar para entrar</Link></p></AuthShell> }
